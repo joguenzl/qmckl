@@ -309,8 +309,8 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
                            trexio_string_of_error(rcio));
   }
 
-  if (basis_type[0] == 'G') {
-    rc = qmckl_set_ao_basis_type(context, basis_type[0]);
+  if (basis_type[0] == 'G' || basis_type[0] == 'N') {
+    rc = qmckl_set_ao_basis_type(context, basis_type[0]); 
   } else {
     return qmckl_failwith( context,
                            QMCKL_FAILURE,
@@ -348,20 +348,22 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
 
    #+begin_src c :tangle (eval c)
   int64_t prim_num = 0L;
+  if (basis_type[0] != 'N') {
 
-  rcio = trexio_read_basis_prim_num_64(file, &prim_num);
-  if (rcio != TREXIO_SUCCESS) {
-    return qmckl_failwith( context,
-                           QMCKL_FAILURE,
-                           "trexio_read_basis_prim_num",
-                           trexio_string_of_error(rcio));
+    rcio = trexio_read_basis_prim_num_64(file, &prim_num);
+    if (rcio != TREXIO_SUCCESS) {
+      return qmckl_failwith( context,
+                             QMCKL_FAILURE,
+                             "trexio_read_basis_prim_num",
+                             trexio_string_of_error(rcio));
+    }
+
+    assert (prim_num > 0);
+    rc = qmckl_set_ao_basis_prim_num(context, prim_num);
+
+    if (rc != QMCKL_SUCCESS)
+      return rc;
   }
-
-  assert (prim_num > 0);
-  rc = qmckl_set_ao_basis_prim_num(context, prim_num);
-
-  if (rc != QMCKL_SUCCESS)
-    return rc;
 
    #+end_src
 
@@ -590,7 +592,7 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
 *** Number of primitives per shell
 
    #+begin_src c :tangle (eval c)
-  {
+  if (basis_type[0] != 'N'){
     qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
 
     /* Allocate array for data */
@@ -671,7 +673,7 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
 *** Indices of the primitives
 
    #+begin_src c :tangle (eval c)
-  {
+  if (basis_type[0] != 'N'){
     qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
 
     /* Allocate array for data */
@@ -790,7 +792,7 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
 *** Exponents
 
    #+begin_src c :tangle (eval c)
-  {
+  if (basis_type[0] != 'N'){
     qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
 
     /* Allocate array for data */
@@ -832,7 +834,7 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
 *** Coefficients
 
    #+begin_src c :tangle (eval c)
-  {
+  if (basis_type[0] != 'N') {
     qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
 
     /* Allocate array for data */
@@ -874,7 +876,7 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
 *** Normalization of the primitivies
 
    #+begin_src c :tangle (eval c)
-  {
+  if (basis_type[0] != 'N') {
     qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
 
     /* Allocate array for data */
@@ -953,15 +955,343 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
       return rc;
   }
    #+end_src
+*** Number of numerical orbital spline data points
 
+   #+begin_src c :tangle (eval c)
+  int64_t numgrid_num = 0L;
+  if (basis_type[0] == 'N') {
 
+    rcio = trexio_read_basis_numgrid_num_64(file, &numgrid_num);
+    if (rcio != TREXIO_SUCCESS) {
+      return qmckl_failwith( context,
+                             QMCKL_FAILURE,
+                             "trexio_read_basis_numgrid_num",
+                             trexio_string_of_error(rcio));
+    }
 
+    assert (numgrid_num > 0);
+    rc = qmckl_set_ao_basis_numgrid_num(context, numgrid_num);
+
+    if (rc != QMCKL_SUCCESS)
+      return rc;
+  }
+
+   #+end_src
+
+*** Number of numerical spline coefficient points
+
+   #+begin_src c :tangle (eval c)
+  int64_t interp_coeff_cnt = 0L;
+  if (basis_type[0] == 'N') {
+
+    rcio = trexio_read_basis_interp_coeff_cnt_64(file, &interp_coeff_cnt);
+    if (rcio != TREXIO_SUCCESS) {
+      return qmckl_failwith( context,
+                             QMCKL_FAILURE,
+                             "trexio_read_basis_interp_coeff_cnt",
+                             trexio_string_of_error(rcio));
+    }
+
+    assert (interp_coeff_cnt > 0);
+    rc = qmckl_set_ao_basis_interp_coeff_cnt(context, interp_coeff_cnt);
+
+    if (rc != QMCKL_SUCCESS)
+      return rc;
+  }
+
+   #+end_src
+
+*** Start indices of splines
+
+   #+begin_src c :tangle (eval c)
+  if (basis_type[0] == 'N'){
+    qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
+
+    /* Allocate array for data */
+    mem_info.size = shell_num * sizeof(int64_t);
+
+    int64_t* numgrid_start = (int64_t*) qmckl_malloc(context, mem_info);
+
+    if (numgrid_start == NULL) {
+      return qmckl_failwith( context,
+                             QMCKL_ALLOCATION_FAILED,
+                             "qmckl_trexio_read_basis_numgrid_start_X",
+                             NULL);
+    }
+
+    assert (numgrid_start != NULL);
+
+    /* Read data */
+    rcio = trexio_read_safe_basis_numgrid_start_64(file, numgrid_start, shell_num);
+    if (rcio != TREXIO_SUCCESS) {
+      qmckl_free(context, numgrid_start);
+      numgrid_start = NULL;
+      return qmckl_failwith( context,
+                             QMCKL_FAILURE,
+                             "trexio_read_basis_numgrid_start",
+                             trexio_string_of_error(rcio));
+    }
+
+    /* Store data */
+    rc = qmckl_set_ao_basis_numgrid_start(context, numgrid_start, shell_num);
+
+    qmckl_free(context, numgrid_start);
+    numgrid_start = NULL;
+
+    if (rc != QMCKL_SUCCESS)
+      return rc;
+  }
+   #+end_src
+
+*** Number of data points per spline
+
+   #+begin_src c :tangle (eval c)
+  if (basis_type[0] == 'N'){
+    qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
+
+    /* Allocate array for data */
+    mem_info.size = shell_num * sizeof(int64_t);
+
+    int64_t* numgrid_size = (int64_t*) qmckl_malloc(context, mem_info);
+
+    if (numgrid_size == NULL) {
+      return qmckl_failwith( context,
+                             QMCKL_ALLOCATION_FAILED,
+                             "qmckl_trexio_read_basis_numgrid_size_X",
+                             NULL);
+    }
+
+    assert (numgrid_size != NULL);
+
+    /* Read data */
+    rcio = trexio_read_safe_basis_numgrid_size_64(file, numgrid_size, shell_num);
+    if (rcio != TREXIO_SUCCESS) {
+      qmckl_free(context, numgrid_size);
+      numgrid_size = NULL;
+      return qmckl_failwith( context,
+                             QMCKL_FAILURE,
+                             "trexio_read_basis_numgrid_size",
+                             trexio_string_of_error(rcio));
+    }
+
+    /* Store data */
+    rc = qmckl_set_ao_basis_numgrid_size(context, numgrid_size, shell_num);
+
+    qmckl_free(context, numgrid_size);
+    numgrid_size = NULL;
+
+    if (rc != QMCKL_SUCCESS)
+      return rc;
+  }
+   #+end_src
+
+*** Radial values of spline data
+
+   #+begin_src c :tangle (eval c)
+  if (basis_type[0] == 'N'){
+    qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
+
+    /* Allocate array for data */
+    mem_info.size = numgrid_num * sizeof(double);
+
+    double* numgrid_radius = (double*) qmckl_malloc(context, mem_info);
+
+    if (numgrid_radius == NULL) {
+      return qmckl_failwith( context,
+                             QMCKL_ALLOCATION_FAILED,
+                             "qmckl_trexio_read_basis_numgrid_radius_X",
+                             NULL);
+    }
+
+    assert (numgrid_radius != NULL);
+
+    /* Read data */
+    rcio = trexio_read_safe_basis_numgrid_radius_64(file, numgrid_radius, numgrid_num);
+    if (rcio != TREXIO_SUCCESS) {
+      qmckl_free(context, numgrid_radius);
+      numgrid_radius = NULL;
+      return qmckl_failwith( context,
+                             QMCKL_FAILURE,
+                             "trexio_read_basis_numgrid_radius",
+                             trexio_string_of_error(rcio));
+    }
+
+    /* Store data */
+    rc = qmckl_set_ao_basis_numgrid_radius(context, numgrid_radius, numgrid_num);
+
+    qmckl_free(context, numgrid_radius);
+    numgrid_radius = NULL;
+
+    if (rc != QMCKL_SUCCESS)
+      return rc;
+  }
+   #+end_src
+
+*** Kind of interpolator
+
+   #+begin_src c :tangle (eval c)
+  char interpolator_kind[MAX_STR_LEN];
+
+  rcio = trexio_read_basis_interpolator_kind(file, interpolator_kind, MAX_STR_LEN);
+  if (rcio != TREXIO_SUCCESS) {
+    return qmckl_failwith( context,
+                           QMCKL_FAILURE,
+                           "trexio_read_interpolator_kind",
+                           trexio_string_of_error(rcio));
+  }
+
+  if (interpolator_kind[0] == 'P') {
+    rc = qmckl_set_ao_interpolator_kind(context, interpolator_kind[0]); 
+  } else {
+    return qmckl_failwith( context,
+                           QMCKL_FAILURE,
+                           "trexio_read_interpolator_kind",
+                           "Invalid interpolator kind");
+  }
+
+  if (rc != QMCKL_SUCCESS)
+    return rc;
+
+   #+end_src
+
+*** Interpolator for wave function
+
+   #+begin_src c :tangle (eval c)
+  if (basis_type[0] == 'N'){
+    qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
+
+    /* Allocate array for data */
+    int64_t data_size = numgrid_num * interp_coeff_cnt;
+    mem_info.size = data_size * sizeof(double);
+
+    double* interpolator_phi = (double*) qmckl_malloc(context, mem_info);
+
+    if (interpolator_phi == NULL) {
+      return qmckl_failwith( context,
+                             QMCKL_ALLOCATION_FAILED,
+                             "qmckl_trexio_read_basis_interpolator_phi_X",
+                             NULL);
+    }
+
+    assert (interpolator_phi != NULL);
+
+    /* Read data */
+    rcio = trexio_read_safe_basis_interpolator_phi_64(file, interpolator_phi, data_size);
+    if (rcio != TREXIO_SUCCESS) {
+      qmckl_free(context, interpolator_phi);
+      interpolator_phi = NULL;
+      return qmckl_failwith( context,
+                             QMCKL_FAILURE,
+                             "trexio_read_basis_interpolator_phi",
+                             trexio_string_of_error(rcio));
+    }
+
+    /* Store data */
+    rc = qmckl_set_ao_basis_interpolator_phi(context, interpolator_phi, data_size);
+
+    qmckl_free(context, interpolator_phi);
+    interpolator_phi = NULL;
+
+    if (rc != QMCKL_SUCCESS)
+      return rc;
+  }
+   #+end_src
+
+*** Interpolator for wave function gradient
+
+   #+begin_src c :tangle (eval c)
+  if (basis_type[0] == 'N'){
+    qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
+
+    /* Allocate array for data */
+    int64_t data_size = numgrid_num * interp_coeff_cnt;
+    mem_info.size = data_size * sizeof(double);
+
+    double* interpolator_grad = (double*) qmckl_malloc(context, mem_info);
+
+    if (interpolator_grad == NULL) {
+      return qmckl_failwith( context,
+                             QMCKL_ALLOCATION_FAILED,
+                             "qmckl_trexio_read_basis_interpolator_grad_X",
+                             NULL);
+    }
+
+    assert (interpolator_grad != NULL);
+
+    /* Read data */
+    rcio = trexio_read_safe_basis_interpolator_grad_64(file, interpolator_grad, data_size);
+    if (rcio != TREXIO_SUCCESS) {
+      qmckl_free(context, interpolator_grad);
+      interpolator_grad = NULL;
+      return qmckl_failwith( context,
+                             QMCKL_FAILURE,
+                             "trexio_read_basis_interpolator_grad",
+                             trexio_string_of_error(rcio));
+    }
+
+    /* Store data */
+    rc = qmckl_set_ao_basis_interpolator_grad(context, interpolator_grad, data_size);
+
+    qmckl_free(context, interpolator_grad);
+    interpolator_grad = NULL;
+
+    if (rc != QMCKL_SUCCESS)
+      return rc;
+  }
+   #+end_src
+
+*** Interpolator for radial wave function laplacian
+
+   #+begin_src c :tangle (eval c)
+  if (basis_type[0] == 'N'){
+    qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
+
+    /* Allocate array for data */
+    int64_t data_size = numgrid_num * interp_coeff_cnt;
+    mem_info.size = data_size * sizeof(double);
+
+    double* interpolator_lap = (double*) qmckl_malloc(context, mem_info);
+
+    if (interpolator_lap == NULL) {
+      return qmckl_failwith( context,
+                             QMCKL_ALLOCATION_FAILED,
+                             "qmckl_trexio_read_basis_interpolator_lap_X",
+                             NULL);
+    }
+
+    assert (interpolator_lap != NULL);
+
+    /* Read data */
+    rcio = trexio_read_safe_basis_interpolator_lap_64(file, interpolator_lap, data_size);
+    if (rcio != TREXIO_SUCCESS) {
+      qmckl_free(context, interpolator_lap);
+      interpolator_lap = NULL;
+      return qmckl_failwith( context,
+                             QMCKL_FAILURE,
+                             "trexio_read_basis_interpolator_lap",
+                             trexio_string_of_error(rcio));
+    }
+
+    /* Store data */
+    rc = qmckl_set_ao_basis_interpolator_lap(context, interpolator_lap, data_size);
+
+    qmckl_free(context, interpolator_lap);
+    interpolator_lap = NULL;
+
+    if (rc != QMCKL_SUCCESS)
+      return rc;
+  }
+   #+end_src
+
+*** End function
    #+begin_src c :tangle (eval c)
 
   return QMCKL_SUCCESS;
 }
 #endif
    #+end_src
+   
+
 ** Molecular orbitals
 
    In this section we read the MO coefficients.
