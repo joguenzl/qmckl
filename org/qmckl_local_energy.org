@@ -363,7 +363,7 @@ qmckl_exit_code qmckl_provide_kinetic_energy(qmckl_context context) {
       ctx->local_energy.e_kin = e_kin;
     }
 
-    if (ctx->det.type == 'G') {
+    if (ctx->det.type == 'G' || ctx->det.type == 'N') {
       rc = qmckl_compute_kinetic_energy(context,
                                  ctx->electron.walker.num,
                                  ctx->det.det_num_alpha,
@@ -935,7 +935,7 @@ qmckl_exit_code qmckl_provide_potential_energy(qmckl_context context) {
       ctx->local_energy.e_pot = e_pot;
     }
 
-    if (ctx->det.type == 'G') {
+    if (ctx->det.type == 'G' || ctx->det.type == 'N') {
       rc = qmckl_compute_potential_energy(context,
                                  ctx->electron.walker.num,
                                  ctx->electron.num,
@@ -1221,7 +1221,7 @@ qmckl_exit_code qmckl_provide_local_energy(qmckl_context context) {
       ctx->local_energy.e_local = local_energy;
     }
 
-    if (ctx->det.type == 'G') {
+    if (ctx->det.type == 'G' || ctx->det.type == 'N') {
       rc = qmckl_compute_local_energy(context,
                                  ctx->electron.walker.num,
                                  ctx->local_energy.e_kin,
@@ -1466,7 +1466,7 @@ qmckl_exit_code qmckl_provide_drift_vector(qmckl_context context) {
     }
 
     qmckl_exit_code rc;
-    if (ctx->det.type == 'G') {
+    if (ctx->det.type == 'G' || ctx->det.type == 'N') {
       rc = qmckl_compute_drift_vector(context,
                                  ctx->electron.walker.num,
                                  ctx->det.det_num_alpha,

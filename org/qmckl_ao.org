@@ -380,9 +380,7 @@ qmckl_exit_code qmckl_init_ao_basis(qmckl_context context) {
   qmckl_context_struct* const ctx = (qmckl_context_struct*) context;
   assert (ctx != NULL);
 
-  printf("before\n");
   ctx->ao_basis.uninitialized = (1 << 23) - 1;
-  printf("%x\n", ctx->ao_basis.uninitialized);
 
   /* Default values */
   ctx->ao_basis.ao_cartesian = true;
@@ -2830,14 +2828,14 @@ qmckl_get_ao_basis_numgrid_size (const qmckl_context context,
     #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
 qmckl_get_ao_basis_numgrid_radius (const qmckl_context context,
-                                  int64_t* const numgrid_radius,
+                                  double* const numgrid_radius,
                                   const int64_t size_max);
     #+end_src
 
     #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
 qmckl_get_ao_basis_numgrid_radius (const qmckl_context context,
-                                  int64_t* const numgrid_radius,
+                                  double* const numgrid_radius,
                                   const int64_t size_max)
 {
   if (qmckl_context_check(context) == QMCKL_NULL_CONTEXT) {
@@ -2875,7 +2873,7 @@ qmckl_get_ao_basis_numgrid_radius (const qmckl_context context,
 
   assert (ctx->ao_basis.numgrid_radius != NULL);
   memcpy(numgrid_radius, ctx->ao_basis.numgrid_radius,
-         (size_t) ctx->ao_basis.numgrid_num * sizeof(int64_t));
+         (size_t) ctx->ao_basis.numgrid_num * sizeof(double));
   return QMCKL_SUCCESS;
 }
 
@@ -2924,14 +2922,14 @@ qmckl_get_ao_interpolator_kind (const qmckl_context context,
     #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
 qmckl_get_ao_basis_interpolator_phi (const qmckl_context context,
-                                  int64_t* const interpolator_phi,
+                                  double* const interpolator_phi,
                                   const int64_t size_max);
     #+end_src
 
     #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
 qmckl_get_ao_basis_interpolator_phi (const qmckl_context context,
-                                  int64_t* const interpolator_phi,
+                                  double* const interpolator_phi,
                                   const int64_t size_max)
 {
   if (qmckl_context_check(context) == QMCKL_NULL_CONTEXT) {
@@ -2969,7 +2967,7 @@ qmckl_get_ao_basis_interpolator_phi (const qmckl_context context,
 
   assert (ctx->ao_basis.interpolator_phi != NULL);
   memcpy(interpolator_phi, ctx->ao_basis.interpolator_phi,
-         (size_t) ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(int64_t));
+         (size_t) ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(double));
   return QMCKL_SUCCESS;
 }
 
@@ -2978,14 +2976,14 @@ qmckl_get_ao_basis_interpolator_phi (const qmckl_context context,
     #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
 qmckl_get_ao_basis_interpolator_grad (const qmckl_context context,
-                                  int64_t* const interpolator_grad,
+                                  double* const interpolator_grad,
                                   const int64_t size_max);
     #+end_src
 
     #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
 qmckl_get_ao_basis_interpolator_grad (const qmckl_context context,
-                                  int64_t* const interpolator_grad,
+                                  double* const interpolator_grad,
                                   const int64_t size_max)
 {
   if (qmckl_context_check(context) == QMCKL_NULL_CONTEXT) {
@@ -3023,7 +3021,7 @@ qmckl_get_ao_basis_interpolator_grad (const qmckl_context context,
 
   assert (ctx->ao_basis.interpolator_grad != NULL);
   memcpy(interpolator_grad, ctx->ao_basis.interpolator_grad,
-         (size_t) ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(int64_t));
+         (size_t) ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(double));
   return QMCKL_SUCCESS;
 }
 
@@ -3032,14 +3030,14 @@ qmckl_get_ao_basis_interpolator_grad (const qmckl_context context,
     #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
 qmckl_get_ao_basis_interpolator_lap (const qmckl_context context,
-                                  int64_t* const interpolator_lap,
+                                  double* const interpolator_lap,
                                   const int64_t size_max);
     #+end_src
 
     #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
 qmckl_get_ao_basis_interpolator_lap (const qmckl_context context,
-                                  int64_t* const interpolator_lap,
+                                  double* const interpolator_lap,
                                   const int64_t size_max)
 {
   if (qmckl_context_check(context) == QMCKL_NULL_CONTEXT) {
@@ -3077,7 +3075,7 @@ qmckl_get_ao_basis_interpolator_lap (const qmckl_context context,
 
   assert (ctx->ao_basis.interpolator_lap != NULL);
   memcpy(interpolator_lap, ctx->ao_basis.interpolator_lap,
-         (size_t) ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(int64_t));
+         (size_t) ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(double));
   return QMCKL_SUCCESS;
 }
 
@@ -3643,14 +3641,39 @@ qmckl_exit_code qmckl_finalize_basis(qmckl_context context) {
     }
   }
 
-  /* Normalize splines !in-place! */
+  /* Normalize splines in-place */
+  int64_t coeff_cnt = ctx->ao_basis.interp_coeff_cnt;
+  // The same spline is used by all shells of a given species, so this is tricky;
+  // duplicates must be avoided.
+  int64_t shell_num = ctx->ao_basis.shell_num;
+  qmckl_memory_info_struct info = qmckl_memory_info_struct_zero;
+  info.size = (size_t) shell_num*sizeof(int64_t);
+  // Array of spline starts that have already been handled
+  int64_t *handled = (int64_t*) qmckl_malloc(context, info);
+  for (int64_t ihandled = 0; ihandled < shell_num; ++ihandled)
+    handled[ihandled] = -1;
+  int64_t handled_cnt = 0;
+
   if (ctx->ao_basis.type == 'N'){
-    for (int64_t ishell=0 ; ishell < ctx->ao_basis.shell_num ; ++ishell) {
-      for (int64_t igrid=ctx->ao_basis.numgrid_start[ishell] ;
-           igrid < ctx->ao_basis.numgrid_start[ishell]+ctx->ao_basis.numgrid_size[ishell] ;
+    for (int64_t ishell=0 ; ishell < shell_num ; ++ishell) {
+      int64_t i0 = ctx->ao_basis.numgrid_start[ishell];
+      // Check whether i0 has already been handled
+      int flag = 0;
+      for (int64_t ihandled = 0; ihandled < handled_cnt; ++ihandled)
+        if (handled[ihandled] == i0) {
+          flag = 1;
+          //printf("Spline already done %ld %ld\n", i0, ihandled);
+          break;
+        }
+      if (flag) // This shell has already been normalized
+        continue;
+      //printf("New spline %ld %ld\n", i0, handled_cnt);
+      handled[handled_cnt++] = i0;
+
+      double factor = ctx->ao_basis.shell_factor[ishell];
+      for (int64_t igrid=i0 ;
+           igrid < i0 + ctx->ao_basis.numgrid_size[ishell] ;
            ++igrid) {
-        double factor = ctx->ao_basis.shell_factor[ishell];
-        int64_t coeff_cnt = ctx->ao_basis.interp_coeff_cnt;
         for (int64_t icoeff = 0; icoeff < coeff_cnt; icoeff++) {
           ctx->ao_basis.interpolator_phi [coeff_cnt * igrid + icoeff] *= factor;
           ctx->ao_basis.interpolator_grad[coeff_cnt * igrid + icoeff] *= factor;
@@ -3659,7 +3682,7 @@ qmckl_exit_code qmckl_finalize_basis(qmckl_context context) {
       }
     }
   }
-
+  qmckl_free(context, handled);
 
   /* Find max angular momentum on each nucleus */
   {
@@ -4581,7 +4604,7 @@ assert(0 == test_qmckl_ao_gaussian_vgl(context));
     #+end_src
 
 ** TODO General functions for Slater basis functions               :noexport:
-** General functions for Radial functions on a grid                :noexport:
+** TODO General functions for Radial functions on a grid                :noexport:
 ** TODO Helper functions to accelerate calculations                :noexport:
 
   |--------------------------+---------------------+--------------------------------------------------------|
@@ -5157,6 +5180,7 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
    | ~nucleus_shell_num~   | ~int64_t[nucl_num]~               | in     | Number of shells for each nucleus                               |
    | ~nucleus_index~       | ~int64_t[nucl_num]~               | in     | Index of the 1st shell of each nucleus                          |
    | ~nucleus_range~       | ~double[nucl_num]~                | in     | Range of the nucleus                                            |
+   | ~shell_ang_mom~       | ~int32_t[shell_num]~              | in     | Angular momentum per shell                                      |
    | ~numgrid_start~       | ~int64_t[shell_num]~              | in     | Index of the 1st spline data point of each shell                |
    | ~numgrid_size~        | ~int64_t[shell_num]~              | in     | Number of spline data points per shell                          |
    | ~coord~               | ~double[3][point_num]~            | in     | Coordinates                                                     |
@@ -5167,6 +5191,11 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
    | ~spline_onset~        | ~double[shell_num]~               | in     | Logarithm of spline onset                                       |
    | ~spline_grid_unit_inv~| ~double[shell_num]~               | in     | Characteristic length of logarithmic grid                       |
    | ~shell_vgl~           | ~double[point_num][5][shell_num]~ | out    | Value, gradients and Laplacian of the shells                    |
+
+   The shells' angular momenta $l$ are necessary since each orbitals is 
+   multiplied by $r^{-l}$ to cancel out the radial contribution of the polynomials.
+   This is usually considered part of the angular function, but since qmckl does
+   not include it there due to the other orbitals, it will be considered here instead.
 
    #+CALL: generate_c_header(table=qmckl_ao_basis_shell_numerical_cubic_vgl_args,rettyp=get_value("CRetType"),fname="qmckl_compute_ao_basis_shell_numerical_cubic_vgl"))
 
@@ -5181,6 +5210,7 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
          const int64_t* nucleus_shell_num,
          const int64_t* nucleus_index,
          const double* nucleus_range,
+         const int32_t* shell_ang_mom,
          const int64_t* numgrid_start,
          const int64_t* numgrid_size,
          const double* coord,
@@ -5196,7 +5226,7 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
    #+begin_src f90 :comments org :tangle (eval f) :noweb yes
 integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
      context, numgrid_num, shell_num, point_num, nucl_num,       &
-     nucleus_shell_num, nucleus_index, nucleus_range,         &
+     nucleus_shell_num, nucleus_index, nucleus_range, shell_ang_mom, &
      numgrid_start, numgrid_size, coord, nucl_coord,     &
      interpolator_phi, interpolator_grad, interpolator_lap, &
      spline_onset, spline_grid_unit_inv, shell_vgl) &
@@ -5211,28 +5241,30 @@ integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
   integer*8             , intent(in)  :: nucleus_shell_num(nucl_num)
   integer*8             , intent(in)  :: nucleus_index(nucl_num)
   double precision      , intent(in)  :: nucleus_range(nucl_num)
+  integer*4             , intent(in)  :: shell_ang_mom(shell_num)
   integer*8             , intent(in)  :: numgrid_start(shell_num)
   integer*8             , intent(in)  :: numgrid_size(shell_num)
   double precision      , intent(in)  :: coord(point_num,3)
   double precision      , intent(in)  :: nucl_coord(nucl_num,3)
-  double precision      , intent(in)  :: interpolator_phi(numgrid_num,4)
-  double precision      , intent(in)  :: interpolator_grad(numgrid_num,4)
-  double precision      , intent(in)  :: interpolator_lap(numgrid_num,4)
+  double precision      , intent(in)  :: interpolator_phi (4,numgrid_num)
+  double precision      , intent(in)  :: interpolator_grad(4,numgrid_num)
+  double precision      , intent(in)  :: interpolator_lap (4,numgrid_num)
   double precision      , intent(in)  :: spline_onset(shell_num)
   double precision      , intent(in)  :: spline_grid_unit_inv(shell_num)
   double precision      , intent(out) :: shell_vgl(shell_num,5,point_num)
 
   integer*8 :: inucl, ipoint, ishell
   integer*8 :: ishell_start, ishell_end
-  double precision :: x, y, z, r2, v, r, r_log, t, grad, lapl
-  integer*8 :: i_log, offset
+  double precision :: x, y, z, r2, v, r, r_inv, r_log, t, deriv1, deriv2
+  double precision :: grad_fac
+  double precision :: lapl_parts(3), d(3)
+  integer*8 :: i_log, offset, L
 
   info = QMCKL_SUCCESS
 
   do ipoint = 1, point_num
 
      do inucl=1,nucl_num
-    print*, ipoint, inucl
 
         x = coord(ipoint,1) - nucl_coord(inucl,1)
         y = coord(ipoint,2) - nucl_coord(inucl,2)
@@ -5244,6 +5276,9 @@ integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
            cycle
         end if
 
+        d(1) = x
+        d(2) = y
+        d(3) = z
 
         ! C is zero-based, so shift bounds by one
         ishell_start = nucleus_index(inucl) + 1
@@ -5252,60 +5287,48 @@ integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
         ! Since all shells per species use the same grid, the radius can
         ! be transformed to the log grid at once
         r = sqrt(r2)
-        r_log = (log(r) - spline_onset(ishell)) * spline_grid_unit_inv(ishell)
+        r_inv = 1 / r
+        r_log = (log(r) - spline_onset(ishell_start)) * spline_grid_unit_inv(ishell_start)
         i_log = int(r_log)
 
         if (i_log < 0) then
           i_log = 0
-        else if (i_log >= numgrid_size(ishell)) then
+        else if (i_log >= numgrid_size(ishell_start)) then
           cycle
         end if
 
         t = r_log - i_log
-        offset = numgrid_start(ishell) + 1
-        !print*, ipoint, inucl, i_log, offset
 
         do ishell=ishell_start, ishell_end
-           v =                 interpolator_phi(offset + i_log, 1)
-           v = v + t *         interpolator_phi(offset + i_log, 2)
-           v = v + t * t *     interpolator_phi(offset + i_log, 3)
-           v = v + t * t * t * interpolator_phi(offset + i_log, 4)
-           v = v / r
+           L = shell_ang_mom(ishell)
+           offset = numgrid_start(ishell) + 1
+           v =                 interpolator_phi(1, offset + i_log)
+           v = v + t *         interpolator_phi(2, offset + i_log)
+           v = v + t * t *     interpolator_phi(3, offset + i_log)
+           v = v + t * t * t * interpolator_phi(4, offset + i_log)
+           deriv1 =                      interpolator_grad(1, offset + i_log)
+           deriv1 = deriv1 + t *         interpolator_grad(2, offset + i_log)
+           deriv1 = deriv1 + t * t *     interpolator_grad(3, offset + i_log)
+           deriv1 = deriv1 + t * t * t * interpolator_grad(4, offset + i_log)
+           deriv2 =                      interpolator_lap(1, offset + i_log)
+           deriv2 = deriv2 + t *         interpolator_lap(2, offset + i_log)
+           deriv2 = deriv2 + t * t *     interpolator_lap(3, offset + i_log)
+           deriv2 = deriv2 + t * t * t * interpolator_lap(4, offset + i_log)
 
-           shell_vgl(ishell, 1, ipoint) = 0.5d0
-           shell_vgl(ishell, 2, ipoint) = 1.d0
-           shell_vgl(ishell, 3, ipoint) = 2.d0
-           shell_vgl(ishell, 4, ipoint) = 3.d0
-           shell_vgl(ishell, 5, ipoint) = 4.d0
+           grad_fac = r_inv**(L+2) * (deriv1 - (L+1) * v * r_inv)
+           lapl_parts(:) = r_inv**(L+5) * (d(:)**2 * r**2*deriv2 &
+                 + r*((-2*L-3)*d(:)**2 + r**2)*deriv1 &
+                 + (L+1)*v*((L+3)*d(:)**2 - r**2))
 
+           shell_vgl(ishell, 1, ipoint) = v * r_inv**(L+1)
+           shell_vgl(ishell, 2, ipoint) = x * grad_fac
+           shell_vgl(ishell, 3, ipoint) = y * grad_fac
+           shell_vgl(ishell, 4, ipoint) = z * grad_fac
+           shell_vgl(ishell, 5, ipoint) = sum(lapl_parts)
 
-        !   !do iprim = iprim_start, iprim_end
-
-        !   !   ar2 = expo(iprim)*r2
-        !   !   if (ar2 > cutoff) then
-        !   !      cycle
-        !   !   end if
-
-        !   !   v = coef_normalized(iprim) * dexp(-ar2)
-        !   !   two_a = -2.d0 * expo(iprim) * v
-
-        !   !   shell_vgl(ishell, 1, ipoint) = &
-        !   !        shell_vgl(ishell, 1, ipoint) + v
-
-        !   !   shell_vgl(ishell, 2, ipoint) = &
-        !   !        shell_vgl(ishell, 2, ipoint) + two_a * x
-
-        !   !   shell_vgl(ishell, 3, ipoint) = &
-        !   !        shell_vgl(ishell, 3, ipoint) + two_a * y
-
-        !   !   shell_vgl(ishell, 4, ipoint) = &
-        !   !        shell_vgl(ishell, 4, ipoint) + two_a * z
-
-        !   !   shell_vgl(ishell, 5, ipoint) = &
-        !   !        shell_vgl(ishell, 5, ipoint) + two_a * (3.d0 - 2.d0*ar2)
-
-        !   !end do
-
+           !v = v * r_inv**(shell_ang_mom(ishell) + 1)
+           !grad_fac = r_inv**2 * (deriv1 - v * r_inv)
+           !lapl_parts(:) = d(:)**2 * r_inv**3 * deriv2 + (3*d(:)**2 - r2) * (v*r_inv**5 - deriv1 * r_inv**4)
         end do
      end do
 
@@ -5327,6 +5350,7 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
         nucleus_shell_num, &
         nucleus_index, &
         nucleus_range, &
+        shell_ang_mom, &
         numgrid_start, &
         numgrid_size, &
         coord, &
@@ -5350,13 +5374,14 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
      integer (c_int64_t) , intent(in)          :: nucleus_shell_num(nucl_num)
      integer (c_int64_t) , intent(in)          :: nucleus_index(nucl_num)
      real    (c_double ) , intent(in)          :: nucleus_range(nucl_num)
+     integer (c_int32_t) , intent(in)          :: shell_ang_mom(shell_num)
      integer (c_int64_t) , intent(in)          :: numgrid_start(shell_num)
      integer (c_int64_t) , intent(in)          :: numgrid_size(shell_num)
      real    (c_double ) , intent(in)          :: coord(point_num,3)
      real    (c_double ) , intent(in)          :: nucl_coord(nucl_num,3)
-     real    (c_double ) , intent(in)          :: interpolator_phi(numgrid_num,4)
-     real    (c_double ) , intent(in)          :: interpolator_grad(numgrid_num,4)
-     real    (c_double ) , intent(in)          :: interpolator_lap(numgrid_num,4)
+     real    (c_double ) , intent(in)          :: interpolator_phi (4,numgrid_num)
+     real    (c_double ) , intent(in)          :: interpolator_grad(4,numgrid_num)
+     real    (c_double ) , intent(in)          :: interpolator_lap (4,numgrid_num)
      real    (c_double ) , intent(in)          :: spline_onset(shell_num)
      real    (c_double ) , intent(in)          :: spline_grid_unit_inv(shell_num)
      real    (c_double ) , intent(out)         :: shell_vgl(shell_num,5,point_num)
@@ -5371,6 +5396,7 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
         nucleus_shell_num, &
         nucleus_index, &
         nucleus_range, &
+        shell_ang_mom, &
         numgrid_start, &
         numgrid_size, &
         coord, &
@@ -5482,6 +5508,7 @@ qmckl_exit_code qmckl_provide_ao_basis_shell_vgl(qmckl_context context)
                                                      ctx->ao_basis.nucleus_shell_num,
                                                      ctx->ao_basis.nucleus_index,
                                                      ctx->ao_basis.nucleus_range,
+                                                     ctx->ao_basis.shell_ang_mom,
                                                      ctx->ao_basis.numgrid_start,
                                                      ctx->ao_basis.numgrid_size,
                                                      ctx->point.coord.data,
@@ -6975,6 +7002,7 @@ integer function qmckl_compute_ao_value_doc_f(context, &
               ! Value
               ao_value(k,ipoint) = &
                    poly_vgl(1,il) * shell_vgl(ishell,1,ipoint) * ao_factor(k)
+              !print*, k, ipoint, poly_vgl(1,il),shell_vgl(ishell,1,ipoint),ao_value(k,ipoint)
               k = k+1
            end do
         end do
