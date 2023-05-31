@@ -1130,27 +1130,29 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
 *** Kind of interpolator
 
    #+begin_src c :tangle (eval c)
-  char interpolator_kind[MAX_STR_LEN];
+  if (basis_type[0] == 'N'){
+    char interpolator_kind[MAX_STR_LEN];
 
-  rcio = trexio_read_basis_interpolator_kind(file, interpolator_kind, MAX_STR_LEN);
-  if (rcio != TREXIO_SUCCESS) {
-    return qmckl_failwith( context,
-                           QMCKL_FAILURE,
-                           "trexio_read_interpolator_kind",
-                           trexio_string_of_error(rcio));
+    rcio = trexio_read_basis_interpolator_kind(file, interpolator_kind, MAX_STR_LEN);
+    if (rcio != TREXIO_SUCCESS) {
+      return qmckl_failwith( context,
+                             QMCKL_FAILURE,
+                             "trexio_read_interpolator_kind",
+                             trexio_string_of_error(rcio));
+    }
+
+    if (interpolator_kind[0] == 'P') {
+      rc = qmckl_set_ao_interpolator_kind(context, interpolator_kind[0]); 
+    } else {
+      return qmckl_failwith( context,
+                             QMCKL_FAILURE,
+                             "trexio_read_interpolator_kind",
+                             "Invalid interpolator kind");
+    }
+
+    if (rc != QMCKL_SUCCESS)
+      return rc;
   }
-
-  if (interpolator_kind[0] == 'P') {
-    rc = qmckl_set_ao_interpolator_kind(context, interpolator_kind[0]); 
-  } else {
-    return qmckl_failwith( context,
-                           QMCKL_FAILURE,
-                           "trexio_read_interpolator_kind",
-                           "Invalid interpolator kind");
-  }
-
-  if (rc != QMCKL_SUCCESS)
-    return rc;
 
    #+end_src
 

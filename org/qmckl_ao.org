@@ -457,8 +457,9 @@ qmckl_set_ao_basis_type(qmckl_context context,
     //mask |= 0b00000000'00000000'00001110'11000100;
     mask |= 0b00000000000000000000111011000100;
   else
-    //mask |= 0b00000000'01111111'11000000'00000000;
-    mask |= 0b000000000111111111000000000000000;
+    //mask |= 0b00000000'01111111'11000000'00000000; // Prior to modifications
+    //mask |= 0b00000000'011111111'11000000'00000000;
+    mask |= 0b00000000011111111100000000000000;
 
   ctx->ao_basis.type = basis_type;
 
@@ -3642,19 +3643,19 @@ qmckl_exit_code qmckl_finalize_basis(qmckl_context context) {
   }
 
   /* Normalize splines in-place */
-  int64_t coeff_cnt = ctx->ao_basis.interp_coeff_cnt;
-  // The same spline is used by all shells of a given species, so this is tricky;
-  // duplicates must be avoided.
-  int64_t shell_num = ctx->ao_basis.shell_num;
-  qmckl_memory_info_struct info = qmckl_memory_info_struct_zero;
-  info.size = (size_t) shell_num*sizeof(int64_t);
-  // Array of spline starts that have already been handled
-  int64_t *handled = (int64_t*) qmckl_malloc(context, info);
-  for (int64_t ihandled = 0; ihandled < shell_num; ++ihandled)
-    handled[ihandled] = -1;
-  int64_t handled_cnt = 0;
-
   if (ctx->ao_basis.type == 'N'){
+    int64_t coeff_cnt = ctx->ao_basis.interp_coeff_cnt;
+    // The same spline is used by all shells of a given species, so this is tricky;
+    // duplicates must be avoided.
+    int64_t shell_num = ctx->ao_basis.shell_num;
+    qmckl_memory_info_struct info = qmckl_memory_info_struct_zero;
+    info.size = (size_t) shell_num*sizeof(int64_t);
+    // Array of spline starts that have already been handled
+    int64_t *handled = (int64_t*) qmckl_malloc(context, info);
+    for (int64_t ihandled = 0; ihandled < shell_num; ++ihandled)
+      handled[ihandled] = -1;
+    int64_t handled_cnt = 0;
+
     for (int64_t ishell=0 ; ishell < shell_num ; ++ishell) {
       int64_t i0 = ctx->ao_basis.numgrid_start[ishell];
       // Check whether i0 has already been handled
@@ -3681,8 +3682,8 @@ qmckl_exit_code qmckl_finalize_basis(qmckl_context context) {
         }
       }
     }
+    qmckl_free(context, handled);
   }
-  qmckl_free(context, handled);
 
   /* Find max angular momentum on each nucleus */
   {
@@ -3751,7 +3752,7 @@ qmckl_exit_code qmckl_finalize_basis(qmckl_context context) {
   }
 
   /* spline_onset */
-  {
+  if (ctx->ao_basis.type == 'N') {
     qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
     mem_info.size = (ctx->ao_basis.shell_num) * sizeof(double);
 
@@ -3771,7 +3772,7 @@ qmckl_exit_code qmckl_finalize_basis(qmckl_context context) {
   }
 
   /* spline_grid_unit_inv */
-  {
+  if (ctx->ao_basis.type == 'N') {
     qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
     mem_info.size = (ctx->ao_basis.shell_num) * sizeof(double);
 
