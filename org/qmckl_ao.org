@@ -140,15 +140,15 @@ int main() {
    | ~ao_num~            | ~int64_t~                              | Number of AOs                                                            | G,S,N           |            12 |
    | ~ao_cartesian~      | ~bool~                                 | If true, use polynomials. Otherwise, use spherical harmonics             | G,S,N           |            -- |
    | ~ao_factor~         | ~double[ao_num]~                       | Normalization factor of the AO                                           | G,S,N           |            13 |
-   | ~numgrid_num~       | ~int64_t~                              | Total number of grid points for numerical orbitals                       | N               |            14 |
+   | ~nao_grid_num~       | ~int64_t~                              | Total number of grid points for numerical orbitals                       | N               |            14 |
    | ~interp_coeff_cnt~  | ~int64_t~                              | Number of coefficients for the numerical orbital interpolator            | N               |            15 |
-   | ~numgrid_start~     | ~int64_t[shell_num]~                   | Index of the first data point for a given numerical orbital              | N               |            16 |
-   | ~numgrid_size~      | ~int64_t[shell_num]~                   | Number of data points per numerical orbital                              | N               |            17 |
-   | ~numgrid_radius~    | ~double[numgrid_num]~                  | Radii of grid points for numerical orbitals                              | N               |            18 |
+   | ~nao_grid_start~     | ~int64_t[shell_num]~                   | Index of the first data point for a given numerical orbital              | N               |            16 |
+   | ~nao_grid_size~      | ~int64_t[shell_num]~                   | Number of data points per numerical orbital                              | N               |            17 |
+   | ~nao_grid_radius~    | ~double[nao_grid_num]~                  | Radii of grid points for numerical orbitals                              | N               |            18 |
    | ~interpolator_kind~ | ~char~                                 | Type of spline for the interpolators, e.g. \"P\" for polynomial          | N               |            19 |
-   | ~interpolator_phi~  | ~double[numgrid_num,interp_coeff_cnt]~ | Coefficients for numerical orbitals interpolation function               | N               |            20 |
-   | ~interpolator_grad~ | ~double[numgrid_num,interp_coeff_cnt]~ | Coefficients for numerical orbital gradient interpolation function       | N               |            21 |
-   | ~interpolator_lap~  | ~double[numgrid_num,interp_coeff_cnt]~ | Coefficients for numerical orbital laplacian interpolation function      | N               |            22 |
+   | ~interpolator_phi~  | ~double[nao_grid_num,interp_coeff_cnt]~ | Coefficients for numerical orbitals interpolation function               | N               |            20 |
+   | ~interpolator_grad~ | ~double[nao_grid_num,interp_coeff_cnt]~ | Coefficients for numerical orbital gradient interpolation function       | N               |            21 |
+   | ~interpolator_lap~  | ~double[nao_grid_num,interp_coeff_cnt]~ | Coefficients for numerical orbital laplacian interpolation function      | N               |            22 |
    |---------------------+----------------------------------------+--------------------------------------------------------------------------+-----------------+---------------|
 
    The following data is computed when the basis is finalized:
@@ -318,11 +318,11 @@ typedef struct qmckl_ao_basis_struct {
   int64_t * restrict ao_nucl;
   int32_t * restrict ao_ang_mom;
 
-  int64_t            numgrid_num;
+  int64_t            nao_grid_num;
   int64_t            interp_coeff_cnt;
-  int64_t * restrict numgrid_start;
-  int64_t * restrict numgrid_size;
-  double  * restrict numgrid_radius;
+  int64_t * restrict nao_grid_start;
+  int64_t * restrict nao_grid_size;
+  double  * restrict nao_grid_radius;
   char               interpolator_kind;
   double  * restrict interpolator_phi;
   double  * restrict interpolator_grad;
@@ -1242,24 +1242,24 @@ qmckl_set_ao_basis_cartesian (qmckl_context context,
 
      #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
-qmckl_set_ao_basis_numgrid_num (qmckl_context context,
-                                const int64_t numgrid_num);
+qmckl_set_ao_basis_nao_grid_num (qmckl_context context,
+                                const int64_t nao_grid_num);
      #+end_src
 
      #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
-qmckl_set_ao_basis_numgrid_num (qmckl_context context,
-                               const int64_t numgrid_num)
+qmckl_set_ao_basis_nao_grid_num (qmckl_context context,
+                               const int64_t nao_grid_num)
 {
   int32_t mask = 1 << 14;
 
   <<pre2>>
 
-  if (numgrid_num <= 0) {
+  if (nao_grid_num <= 0) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_2,
-                           "qmckl_set_ao_basis_numgrid_num",
-                           "numgrid_num must be positive");
+                           "qmckl_set_ao_basis_nao_grid_num",
+                           "nao_grid_num must be positive");
   }
 
   const int64_t shell_num = ctx->ao_basis.shell_num;
@@ -1267,11 +1267,11 @@ qmckl_set_ao_basis_numgrid_num (qmckl_context context,
   if (shell_num <= 0L) {
     return qmckl_failwith( context,
                            QMCKL_FAILURE,
-                           "qmckl_set_ao_basis_numgrid_num",
+                           "qmckl_set_ao_basis_nao_grid_num",
                            "shell_num is not set");
   }
 
-  ctx->ao_basis.numgrid_num = numgrid_num;
+  ctx->ao_basis.nao_grid_num = nao_grid_num;
 
   <<post2>>
 }
@@ -1317,15 +1317,15 @@ qmckl_set_ao_basis_interp_coeff_cnt (qmckl_context context,
 
      #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
-qmckl_set_ao_basis_numgrid_start (qmckl_context context,
-                                  const int64_t* numgrid_start,
+qmckl_set_ao_basis_nao_grid_start (qmckl_context context,
+                                  const int64_t* nao_grid_start,
                                   const int64_t size_max);
      #+end_src
 
      #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
-qmckl_set_ao_basis_numgrid_start (qmckl_context context,
-                                  const int64_t* numgrid_start,
+qmckl_set_ao_basis_nao_grid_start (qmckl_context context,
+                                  const int64_t* nao_grid_start,
                                   const int64_t size_max)
 {
   int32_t mask = 1 << 16;
@@ -1337,22 +1337,22 @@ qmckl_set_ao_basis_numgrid_start (qmckl_context context,
   if (shell_num == 0L) {
     return qmckl_failwith( context,
                            QMCKL_FAILURE,
-                           "qmckl_set_ao_basis_numgrid_start",
+                           "qmckl_set_ao_basis_nao_grid_start",
                            "shell_num is not set");
   }
 
   if (size_max < shell_num) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_3,
-                           "qmckl_set_ao_basis_numgrid_start",
+                           "qmckl_set_ao_basis_nao_grid_start",
                            "input array too small");
   }
 
-  if (ctx->ao_basis.numgrid_start != NULL) {
-    qmckl_exit_code rc = qmckl_free(context, ctx->ao_basis.numgrid_start);
+  if (ctx->ao_basis.nao_grid_start != NULL) {
+    qmckl_exit_code rc = qmckl_free(context, ctx->ao_basis.nao_grid_start);
     if (rc != QMCKL_SUCCESS) {
       return qmckl_failwith( context, rc,
-                             "qmckl_set_ao_basis_numgrid_start",
+                             "qmckl_set_ao_basis_nao_grid_start",
                              NULL);
     }
   }
@@ -1365,13 +1365,13 @@ qmckl_set_ao_basis_numgrid_start (qmckl_context context,
   if (new_array == NULL) {
     return qmckl_failwith( context,
                            QMCKL_ALLOCATION_FAILED,
-                           "qmckl_set_ao_basis_numgrid_start",
+                           "qmckl_set_ao_basis_nao_grid_start",
                            NULL);
   }
 
-  memcpy(new_array, numgrid_start, mem_info.size);
+  memcpy(new_array, nao_grid_start, mem_info.size);
 
-  ctx->ao_basis.numgrid_start = new_array;
+  ctx->ao_basis.nao_grid_start = new_array;
 
   <<post2>>
 }
@@ -1379,15 +1379,15 @@ qmckl_set_ao_basis_numgrid_start (qmckl_context context,
 
      #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
-qmckl_set_ao_basis_numgrid_size (qmckl_context context,
-                                  const int64_t* numgrid_size,
+qmckl_set_ao_basis_nao_grid_size (qmckl_context context,
+                                  const int64_t* nao_grid_size,
                                   const int64_t size_max);
      #+end_src
 
      #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
-qmckl_set_ao_basis_numgrid_size (qmckl_context context,
-                                  const int64_t* numgrid_size,
+qmckl_set_ao_basis_nao_grid_size (qmckl_context context,
+                                  const int64_t* nao_grid_size,
                                   const int64_t size_max)
 {
   int32_t mask = 1 << 17;
@@ -1399,22 +1399,22 @@ qmckl_set_ao_basis_numgrid_size (qmckl_context context,
   if (shell_num == 0L) {
     return qmckl_failwith( context,
                            QMCKL_FAILURE,
-                           "qmckl_set_ao_basis_numgrid_size",
+                           "qmckl_set_ao_basis_nao_grid_size",
                            "shell_num is not set");
   }
 
   if (size_max < shell_num) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_3,
-                           "qmckl_set_ao_basis_numgrid_size",
+                           "qmckl_set_ao_basis_nao_grid_size",
                            "input array too small");
   }
 
-  if (ctx->ao_basis.numgrid_size != NULL) {
-    qmckl_exit_code rc = qmckl_free(context, ctx->ao_basis.numgrid_size);
+  if (ctx->ao_basis.nao_grid_size != NULL) {
+    qmckl_exit_code rc = qmckl_free(context, ctx->ao_basis.nao_grid_size);
     if (rc != QMCKL_SUCCESS) {
       return qmckl_failwith( context, rc,
-                             "qmckl_set_ao_basis_numgrid_size",
+                             "qmckl_set_ao_basis_nao_grid_size",
                              NULL);
     }
   }
@@ -1427,13 +1427,13 @@ qmckl_set_ao_basis_numgrid_size (qmckl_context context,
   if (new_array == NULL) {
     return qmckl_failwith( context,
                            QMCKL_ALLOCATION_FAILED,
-                           "qmckl_set_ao_basis_numgrid_size",
+                           "qmckl_set_ao_basis_nao_grid_size",
                            NULL);
   }
 
-  memcpy(new_array, numgrid_size, mem_info.size);
+  memcpy(new_array, nao_grid_size, mem_info.size);
 
-  ctx->ao_basis.numgrid_size = new_array;
+  ctx->ao_basis.nao_grid_size = new_array;
 
   <<post2>>
 }
@@ -1442,61 +1442,61 @@ qmckl_set_ao_basis_numgrid_size (qmckl_context context,
 
      #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
-qmckl_set_ao_basis_numgrid_radius (qmckl_context context,
-                                  const double* numgrid_radius,
+qmckl_set_ao_basis_nao_grid_radius (qmckl_context context,
+                                  const double* nao_grid_radius,
                                   const int64_t size_max);
      #+end_src
 
      #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
-qmckl_set_ao_basis_numgrid_radius (qmckl_context context,
-                                  const double* numgrid_radius,
+qmckl_set_ao_basis_nao_grid_radius (qmckl_context context,
+                                  const double* nao_grid_radius,
                                   const int64_t size_max)
 {
   int32_t mask = 1 << 18;
 
   <<pre2>>
 
-  const int64_t numgrid_num = ctx->ao_basis.numgrid_num;
+  const int64_t nao_grid_num = ctx->ao_basis.nao_grid_num;
 
-  if (numgrid_num == 0L) {
+  if (nao_grid_num == 0L) {
     return qmckl_failwith( context,
                            QMCKL_FAILURE,
-                           "qmckl_set_ao_basis_numgrid_radius",
-                           "numgrid_num is not set");
+                           "qmckl_set_ao_basis_nao_grid_radius",
+                           "nao_grid_num is not set");
   }
 
-  if (size_max < numgrid_num) {
+  if (size_max < nao_grid_num) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_3,
-                           "qmckl_set_ao_basis_numgrid_radius",
+                           "qmckl_set_ao_basis_nao_grid_radius",
                            "input array too small");
   }
 
-  if (ctx->ao_basis.numgrid_radius != NULL) {
-    qmckl_exit_code rc = qmckl_free(context, ctx->ao_basis.numgrid_radius);
+  if (ctx->ao_basis.nao_grid_radius != NULL) {
+    qmckl_exit_code rc = qmckl_free(context, ctx->ao_basis.nao_grid_radius);
     if (rc != QMCKL_SUCCESS) {
       return qmckl_failwith( context, rc,
-                             "qmckl_set_ao_basis_numgrid_radius",
+                             "qmckl_set_ao_basis_nao_grid_radius",
                              NULL);
     }
   }
 
 
   qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
-  mem_info.size = numgrid_num * sizeof(double);
+  mem_info.size = nao_grid_num * sizeof(double);
   double * new_array = (double*) qmckl_malloc(context, mem_info);
 
   if (new_array == NULL) {
     return qmckl_failwith( context,
                            QMCKL_ALLOCATION_FAILED,
-                           "qmckl_set_ao_basis_numgrid_radius",
+                           "qmckl_set_ao_basis_nao_grid_radius",
                            NULL);
   }
 
-  memcpy(new_array, numgrid_radius, mem_info.size);
+  memcpy(new_array, nao_grid_radius, mem_info.size);
 
-  ctx->ao_basis.numgrid_radius = new_array;
+  ctx->ao_basis.nao_grid_radius = new_array;
 
   <<post2>>
 }
@@ -1548,13 +1548,13 @@ qmckl_set_ao_basis_interpolator_phi (qmckl_context context,
 
   <<pre2>>
 
-  const int64_t numgrid_num = ctx->ao_basis.numgrid_num;
+  const int64_t nao_grid_num = ctx->ao_basis.nao_grid_num;
 
-  if (numgrid_num == 0L) {
+  if (nao_grid_num == 0L) {
     return qmckl_failwith( context,
                            QMCKL_FAILURE,
                            "qmckl_set_ao_basis_interpolator_phi",
-                           "numgrid_num is not set");
+                           "nao_grid_num is not set");
   }
 
   const int64_t interp_coeff_cnt = ctx->ao_basis.interp_coeff_cnt;
@@ -1566,7 +1566,7 @@ qmckl_set_ao_basis_interpolator_phi (qmckl_context context,
                            "interp_coeff_cnt is not set");
   }
 
-  int64_t data_num = numgrid_num * interp_coeff_cnt;
+  int64_t data_num = nao_grid_num * interp_coeff_cnt;
 
   if (size_max < data_num) {
     return qmckl_failwith( context,
@@ -1622,13 +1622,13 @@ qmckl_set_ao_basis_interpolator_grad (qmckl_context context,
 
   <<pre2>>
 
-  const int64_t numgrid_num = ctx->ao_basis.numgrid_num;
+  const int64_t nao_grid_num = ctx->ao_basis.nao_grid_num;
 
-  if (numgrid_num == 0L) {
+  if (nao_grid_num == 0L) {
     return qmckl_failwith( context,
                            QMCKL_FAILURE,
                            "qmckl_set_ao_basis_interpolator_grad",
-                           "numgrid_num is not set");
+                           "nao_grid_num is not set");
   }
 
   const int64_t interp_coeff_cnt = ctx->ao_basis.interp_coeff_cnt;
@@ -1640,7 +1640,7 @@ qmckl_set_ao_basis_interpolator_grad (qmckl_context context,
                            "interp_coeff_cnt is not set");
   }
 
-  int64_t data_num = numgrid_num * interp_coeff_cnt;
+  int64_t data_num = nao_grid_num * interp_coeff_cnt;
 
   if (size_max < data_num) {
     return qmckl_failwith( context,
@@ -1695,13 +1695,13 @@ qmckl_set_ao_basis_interpolator_lap (qmckl_context context,
 
   <<pre2>>
 
-  const int64_t numgrid_num = ctx->ao_basis.numgrid_num;
+  const int64_t nao_grid_num = ctx->ao_basis.nao_grid_num;
 
-  if (numgrid_num == 0L) {
+  if (nao_grid_num == 0L) {
     return qmckl_failwith( context,
                            QMCKL_FAILURE,
                            "qmckl_set_ao_basis_interpolator_lap",
-                           "numgrid_num is not set");
+                           "nao_grid_num is not set");
   }
 
   const int64_t interp_coeff_cnt = ctx->ao_basis.interp_coeff_cnt;
@@ -1713,7 +1713,7 @@ qmckl_set_ao_basis_interpolator_lap (qmckl_context context,
                            "interp_coeff_cnt is not set");
   }
 
-  int64_t data_num = numgrid_num * interp_coeff_cnt;
+  int64_t data_num = nao_grid_num * interp_coeff_cnt;
 
   if (size_max < data_num) {
     return qmckl_failwith( context,
@@ -2646,19 +2646,19 @@ qmckl_get_ao_basis_ao_factor (const qmckl_context context,
 
     #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
-qmckl_get_ao_basis_numgrid_num (const qmckl_context context,
-                              int64_t* const numgrid_num);
+qmckl_get_ao_basis_nao_grid_num (const qmckl_context context,
+                              int64_t* const nao_grid_num);
     #+end_src
 
     #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
-qmckl_get_ao_basis_numgrid_num (const qmckl_context context,
-                              int64_t* const numgrid_num)
+qmckl_get_ao_basis_nao_grid_num (const qmckl_context context,
+                              int64_t* const nao_grid_num)
 {
   if (qmckl_context_check(context) == QMCKL_NULL_CONTEXT) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_CONTEXT,
-                           "qmckl_get_ao_basis_numgrid_num",
+                           "qmckl_get_ao_basis_nao_grid_num",
                            NULL);
   }
 
@@ -2670,12 +2670,12 @@ qmckl_get_ao_basis_numgrid_num (const qmckl_context context,
   if ( (ctx->ao_basis.uninitialized & mask) != 0) {
     return qmckl_failwith( context,
                            QMCKL_NOT_PROVIDED,
-                           "qmckl_get_ao_basis_numgrid_num",
+                           "qmckl_get_ao_basis_nao_grid_num",
                            NULL);
   }
 
-  assert (ctx->ao_basis.numgrid_num > (int64_t) 0);
-  ,*numgrid_num = ctx->ao_basis.numgrid_num;
+  assert (ctx->ao_basis.nao_grid_num > (int64_t) 0);
+  ,*nao_grid_num = ctx->ao_basis.nao_grid_num;
   return QMCKL_SUCCESS;
 }
 
@@ -2720,21 +2720,21 @@ qmckl_get_ao_basis_interp_coeff_cnt (const qmckl_context context,
 
     #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
-qmckl_get_ao_basis_numgrid_start (const qmckl_context context,
-                                  int64_t* const numgrid_start,
+qmckl_get_ao_basis_nao_grid_start (const qmckl_context context,
+                                  int64_t* const nao_grid_start,
                                   const int64_t size_max);
     #+end_src
 
     #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
-qmckl_get_ao_basis_numgrid_start (const qmckl_context context,
-                                  int64_t* const numgrid_start,
+qmckl_get_ao_basis_nao_grid_start (const qmckl_context context,
+                                  int64_t* const nao_grid_start,
                                   const int64_t size_max)
 {
   if (qmckl_context_check(context) == QMCKL_NULL_CONTEXT) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_CONTEXT,
-                           "qmckl_get_ao_basis_numgrid_start",
+                           "qmckl_get_ao_basis_nao_grid_start",
                            NULL);
   }
 
@@ -2746,26 +2746,26 @@ qmckl_get_ao_basis_numgrid_start (const qmckl_context context,
   if ( (ctx->ao_basis.uninitialized & mask) != 0) {
     return qmckl_failwith( context,
                            QMCKL_NOT_PROVIDED,
-                           "qmckl_get_ao_basis_numgrid_start",
+                           "qmckl_get_ao_basis_nao_grid_start",
                            NULL);
   }
 
-  if (numgrid_start == NULL) {
+  if (nao_grid_start == NULL) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_2,
-                           "qmckl_get_ao_basis_numgrid_start",
+                           "qmckl_get_ao_basis_nao_grid_start",
                            "NULL pointer");
   }
 
   if (size_max < ctx->ao_basis.shell_num) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_3,
-                           "qmckl_get_ao_basis_numgrid_start",
+                           "qmckl_get_ao_basis_nao_grid_start",
                            "Array too small. Expected shell_num");
   }
 
-  assert (ctx->ao_basis.numgrid_start != NULL);
-  memcpy(numgrid_start, ctx->ao_basis.numgrid_start,
+  assert (ctx->ao_basis.nao_grid_start != NULL);
+  memcpy(nao_grid_start, ctx->ao_basis.nao_grid_start,
          (size_t) ctx->ao_basis.shell_num * sizeof(int64_t));
   return QMCKL_SUCCESS;
 }
@@ -2774,21 +2774,21 @@ qmckl_get_ao_basis_numgrid_start (const qmckl_context context,
 
     #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
-qmckl_get_ao_basis_numgrid_size (const qmckl_context context,
-                                  int64_t* const numgrid_size,
+qmckl_get_ao_basis_nao_grid_size (const qmckl_context context,
+                                  int64_t* const nao_grid_size,
                                   const int64_t size_max);
     #+end_src
 
     #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
-qmckl_get_ao_basis_numgrid_size (const qmckl_context context,
-                                  int64_t* const numgrid_size,
+qmckl_get_ao_basis_nao_grid_size (const qmckl_context context,
+                                  int64_t* const nao_grid_size,
                                   const int64_t size_max)
 {
   if (qmckl_context_check(context) == QMCKL_NULL_CONTEXT) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_CONTEXT,
-                           "qmckl_get_ao_basis_numgrid_size",
+                           "qmckl_get_ao_basis_nao_grid_size",
                            NULL);
   }
 
@@ -2800,26 +2800,26 @@ qmckl_get_ao_basis_numgrid_size (const qmckl_context context,
   if ( (ctx->ao_basis.uninitialized & mask) != 0) {
     return qmckl_failwith( context,
                            QMCKL_NOT_PROVIDED,
-                           "qmckl_get_ao_basis_numgrid_size",
+                           "qmckl_get_ao_basis_nao_grid_size",
                            NULL);
   }
 
-  if (numgrid_size == NULL) {
+  if (nao_grid_size == NULL) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_2,
-                           "qmckl_get_ao_basis_numgrid_size",
+                           "qmckl_get_ao_basis_nao_grid_size",
                            "NULL pointer");
   }
 
   if (size_max < ctx->ao_basis.shell_num) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_3,
-                           "qmckl_get_ao_basis_numgrid_size",
+                           "qmckl_get_ao_basis_nao_grid_size",
                            "Array too small. Expected shell_num");
   }
 
-  assert (ctx->ao_basis.numgrid_size != NULL);
-  memcpy(numgrid_size, ctx->ao_basis.numgrid_size,
+  assert (ctx->ao_basis.nao_grid_size != NULL);
+  memcpy(nao_grid_size, ctx->ao_basis.nao_grid_size,
          (size_t) ctx->ao_basis.shell_num * sizeof(int64_t));
   return QMCKL_SUCCESS;
 }
@@ -2828,21 +2828,21 @@ qmckl_get_ao_basis_numgrid_size (const qmckl_context context,
 
     #+begin_src c :comments org :tangle (eval h_func)
 qmckl_exit_code
-qmckl_get_ao_basis_numgrid_radius (const qmckl_context context,
-                                  double* const numgrid_radius,
+qmckl_get_ao_basis_nao_grid_radius (const qmckl_context context,
+                                  double* const nao_grid_radius,
                                   const int64_t size_max);
     #+end_src
 
     #+begin_src c :comments org :tangle (eval c) :noweb yes :exports none
 qmckl_exit_code
-qmckl_get_ao_basis_numgrid_radius (const qmckl_context context,
-                                  double* const numgrid_radius,
+qmckl_get_ao_basis_nao_grid_radius (const qmckl_context context,
+                                  double* const nao_grid_radius,
                                   const int64_t size_max)
 {
   if (qmckl_context_check(context) == QMCKL_NULL_CONTEXT) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_CONTEXT,
-                           "qmckl_get_ao_basis_numgrid_radius",
+                           "qmckl_get_ao_basis_nao_grid_radius",
                            NULL);
   }
 
@@ -2854,27 +2854,27 @@ qmckl_get_ao_basis_numgrid_radius (const qmckl_context context,
   if ( (ctx->ao_basis.uninitialized & mask) != 0) {
     return qmckl_failwith( context,
                            QMCKL_NOT_PROVIDED,
-                           "qmckl_get_ao_basis_numgrid_radius",
+                           "qmckl_get_ao_basis_nao_grid_radius",
                            NULL);
   }
 
-  if (numgrid_radius == NULL) {
+  if (nao_grid_radius == NULL) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_2,
-                           "qmckl_get_ao_basis_numgrid_radius",
+                           "qmckl_get_ao_basis_nao_grid_radius",
                            "NULL pointer");
   }
 
-  if (size_max < ctx->ao_basis.numgrid_num) {
+  if (size_max < ctx->ao_basis.nao_grid_num) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_3,
-                           "qmckl_get_ao_basis_numgrid_radius",
-                           "Array too small. Expected numgrid_num");
+                           "qmckl_get_ao_basis_nao_grid_radius",
+                           "Array too small. Expected nao_grid_num");
   }
 
-  assert (ctx->ao_basis.numgrid_radius != NULL);
-  memcpy(numgrid_radius, ctx->ao_basis.numgrid_radius,
-         (size_t) ctx->ao_basis.numgrid_num * sizeof(double));
+  assert (ctx->ao_basis.nao_grid_radius != NULL);
+  memcpy(nao_grid_radius, ctx->ao_basis.nao_grid_radius,
+         (size_t) ctx->ao_basis.nao_grid_num * sizeof(double));
   return QMCKL_SUCCESS;
 }
 
@@ -2959,16 +2959,16 @@ qmckl_get_ao_basis_interpolator_phi (const qmckl_context context,
                            "NULL pointer");
   }
 
-  if (size_max < ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt) {
+  if (size_max < ctx->ao_basis.nao_grid_num * ctx->ao_basis.interp_coeff_cnt) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_3,
                            "qmckl_get_ao_basis_interpolator_phi",
-                           "Array too small. Expected numgrid_num*interp_coeff_cnt");
+                           "Array too small. Expected nao_grid_num*interp_coeff_cnt");
   }
 
   assert (ctx->ao_basis.interpolator_phi != NULL);
   memcpy(interpolator_phi, ctx->ao_basis.interpolator_phi,
-         (size_t) ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(double));
+         (size_t) ctx->ao_basis.nao_grid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(double));
   return QMCKL_SUCCESS;
 }
 
@@ -3013,16 +3013,16 @@ qmckl_get_ao_basis_interpolator_grad (const qmckl_context context,
                            "NULL pointer");
   }
 
-  if (size_max < ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt) {
+  if (size_max < ctx->ao_basis.nao_grid_num * ctx->ao_basis.interp_coeff_cnt) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_3,
                            "qmckl_get_ao_basis_interpolator_grad",
-                           "Array too small. Expected numgrid_num*interp_coeff_cnt");
+                           "Array too small. Expected nao_grid_num*interp_coeff_cnt");
   }
 
   assert (ctx->ao_basis.interpolator_grad != NULL);
   memcpy(interpolator_grad, ctx->ao_basis.interpolator_grad,
-         (size_t) ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(double));
+         (size_t) ctx->ao_basis.nao_grid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(double));
   return QMCKL_SUCCESS;
 }
 
@@ -3067,16 +3067,16 @@ qmckl_get_ao_basis_interpolator_lap (const qmckl_context context,
                            "NULL pointer");
   }
 
-  if (size_max < ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt) {
+  if (size_max < ctx->ao_basis.nao_grid_num * ctx->ao_basis.interp_coeff_cnt) {
     return qmckl_failwith( context,
                            QMCKL_INVALID_ARG_3,
                            "qmckl_get_ao_basis_interpolator_lap",
-                           "Array too small. Expected numgrid_num*interp_coeff_cnt");
+                           "Array too small. Expected nao_grid_num*interp_coeff_cnt");
   }
 
   assert (ctx->ao_basis.interpolator_lap != NULL);
   memcpy(interpolator_lap, ctx->ao_basis.interpolator_lap,
-         (size_t) ctx->ao_basis.numgrid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(double));
+         (size_t) ctx->ao_basis.nao_grid_num * ctx->ao_basis.interp_coeff_cnt * sizeof(double));
   return QMCKL_SUCCESS;
 }
 
@@ -3657,7 +3657,7 @@ qmckl_exit_code qmckl_finalize_basis(qmckl_context context) {
     int64_t handled_cnt = 0;
 
     for (int64_t ishell=0 ; ishell < shell_num ; ++ishell) {
-      int64_t i0 = ctx->ao_basis.numgrid_start[ishell];
+      int64_t i0 = ctx->ao_basis.nao_grid_start[ishell];
       // Check whether i0 has already been handled
       int flag = 0;
       for (int64_t ihandled = 0; ihandled < handled_cnt; ++ihandled)
@@ -3673,7 +3673,7 @@ qmckl_exit_code qmckl_finalize_basis(qmckl_context context) {
 
       double factor = ctx->ao_basis.shell_factor[ishell];
       for (int64_t igrid=i0 ;
-           igrid < i0 + ctx->ao_basis.numgrid_size[ishell] ;
+           igrid < i0 + ctx->ao_basis.nao_grid_size[ishell] ;
            ++igrid) {
         for (int64_t icoeff = 0; icoeff < coeff_cnt; icoeff++) {
           ctx->ao_basis.interpolator_phi [coeff_cnt * igrid + icoeff] *= factor;
@@ -3741,8 +3741,8 @@ qmckl_exit_code qmckl_finalize_basis(qmckl_context context) {
               ctx->ao_basis.nucleus_range[inucl] : range;
           }
         else if (ctx->ao_basis.type == 'N') {
-          int64_t index = ctx->ao_basis.numgrid_start[ishell] + ctx->ao_basis.numgrid_size[ishell] - 1;
-          double range = ctx->ao_basis.numgrid_radius[index];
+          int64_t index = ctx->ao_basis.nao_grid_start[ishell] + ctx->ao_basis.nao_grid_size[ishell] - 1;
+          double range = ctx->ao_basis.nao_grid_radius[index];
           ctx->ao_basis.nucleus_range[inucl] =
             ctx->ao_basis.nucleus_range[inucl] > range ?
             ctx->ao_basis.nucleus_range[inucl] : range;
@@ -3766,8 +3766,8 @@ qmckl_exit_code qmckl_finalize_basis(qmckl_context context) {
     }
 
     for (int64_t i=0 ; i<ctx->ao_basis.shell_num ; ++i) {
-      int64_t start_index = ctx->ao_basis.numgrid_start[i];
-      ctx->ao_basis.spline_onset[i] = log(ctx->ao_basis.numgrid_radius[start_index]);
+      int64_t start_index = ctx->ao_basis.nao_grid_start[i];
+      ctx->ao_basis.spline_onset[i] = log(ctx->ao_basis.nao_grid_radius[start_index]);
     }
   }
 
@@ -3786,10 +3786,10 @@ qmckl_exit_code qmckl_finalize_basis(qmckl_context context) {
     }
 
     for (int64_t i=0 ; i<ctx->ao_basis.shell_num ; ++i) {
-      int64_t start_index = ctx->ao_basis.numgrid_start[i];
+      int64_t start_index = ctx->ao_basis.nao_grid_start[i];
       ctx->ao_basis.spline_grid_unit_inv[i] = 1/log(
-        ctx->ao_basis.numgrid_radius[start_index + 1]
-         / ctx->ao_basis.numgrid_radius[start_index]
+        ctx->ao_basis.nao_grid_radius[start_index + 1]
+         / ctx->ao_basis.nao_grid_radius[start_index]
         );
     }
   }
@@ -5174,7 +5174,7 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
    | Variable              | Type                              | In/Out | Description                                                     |
    |-----------------------+-----------------------------------+--------+-----------------------------------------------------------------|
    | ~context~             | ~qmckl_context~                   | in     | Global state                                                    |
-   | ~numgrid_num~         | ~int64_t~                         | in     | Number of data points per spline group                          |
+   | ~nao_grid_num~         | ~int64_t~                         | in     | Number of data points per spline group                          |
    | ~shell_num~           | ~int64_t~                         | in     | Number of shells                                                |
    | ~point_num~           | ~int64_t~                         | in     | Number of points                                                |
    | ~nucl_num~            | ~int64_t~                         | in     | Number of nuclei                                                |
@@ -5182,13 +5182,13 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
    | ~nucleus_index~       | ~int64_t[nucl_num]~               | in     | Index of the 1st shell of each nucleus                          |
    | ~nucleus_range~       | ~double[nucl_num]~                | in     | Range of the nucleus                                            |
    | ~shell_ang_mom~       | ~int32_t[shell_num]~              | in     | Angular momentum per shell                                      |
-   | ~numgrid_start~       | ~int64_t[shell_num]~              | in     | Index of the 1st spline data point of each shell                |
-   | ~numgrid_size~        | ~int64_t[shell_num]~              | in     | Number of spline data points per shell                          |
+   | ~nao_grid_start~       | ~int64_t[shell_num]~              | in     | Index of the 1st spline data point of each shell                |
+   | ~nao_grid_size~        | ~int64_t[shell_num]~              | in     | Number of spline data points per shell                          |
    | ~coord~               | ~double[3][point_num]~            | in     | Coordinates                                                     |
    | ~nucl_coord~          | ~double[3][nucl_num]~             | in     | Nuclear coordinates                                             |
-   | ~interpolator_phi~    | ~double[4*numgrid_num]~           | in     | Spline data for the radial wave function interpolator           |
-   | ~interpolator_grad~   | ~double[4*numgrid_num]~           | in     | Spline data for the radial wave function gradient interpolator  |
-   | ~interpolator_lap~    | ~double[4*numgrid_num]~           | in     | Spline data for the radial wave function laplacian interpolator |
+   | ~interpolator_phi~    | ~double[4*nao_grid_num]~           | in     | Spline data for the radial wave function interpolator           |
+   | ~interpolator_grad~   | ~double[4*nao_grid_num]~           | in     | Spline data for the radial wave function gradient interpolator  |
+   | ~interpolator_lap~    | ~double[4*nao_grid_num]~           | in     | Spline data for the radial wave function laplacian interpolator |
    | ~spline_onset~        | ~double[shell_num]~               | in     | Logarithm of spline onset                                       |
    | ~spline_grid_unit_inv~| ~double[shell_num]~               | in     | Characteristic length of logarithmic grid                       |
    | ~shell_vgl~           | ~double[point_num][5][shell_num]~ | out    | Value, gradients and Laplacian of the shells                    |
@@ -5204,7 +5204,7 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
    #+begin_src c :tangle (eval h_func) :comments org
    qmckl_exit_code qmckl_compute_ao_basis_shell_numerical_cubic_vgl (
          const qmckl_context context,
-         const int64_t numgrid_num,
+         const int64_t nao_grid_num,
          const int64_t shell_num,
          const int64_t point_num,
          const int64_t nucl_num,
@@ -5212,8 +5212,8 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
          const int64_t* nucleus_index,
          const double* nucleus_range,
          const int32_t* shell_ang_mom,
-         const int64_t* numgrid_start,
-         const int64_t* numgrid_size,
+         const int64_t* nao_grid_start,
+         const int64_t* nao_grid_size,
          const double* coord,
          const double* nucl_coord,
          const double* interpolator_phi,
@@ -5226,16 +5226,16 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
 
    #+begin_src f90 :comments org :tangle (eval f) :noweb yes
 integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
-     context, numgrid_num, shell_num, point_num, nucl_num,       &
+     context, nao_grid_num, shell_num, point_num, nucl_num,       &
      nucleus_shell_num, nucleus_index, nucleus_range, shell_ang_mom, &
-     numgrid_start, numgrid_size, coord, nucl_coord,     &
+     nao_grid_start, nao_grid_size, coord, nucl_coord,     &
      interpolator_phi, interpolator_grad, interpolator_lap, &
      spline_onset, spline_grid_unit_inv, shell_vgl) &
      result(info)
   use qmckl
   implicit none
   integer(qmckl_context), intent(in)  :: context
-  integer*8             , intent(in)  :: numgrid_num
+  integer*8             , intent(in)  :: nao_grid_num
   integer*8             , intent(in)  :: shell_num
   integer*8             , intent(in)  :: point_num
   integer*8             , intent(in)  :: nucl_num
@@ -5243,13 +5243,13 @@ integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
   integer*8             , intent(in)  :: nucleus_index(nucl_num)
   double precision      , intent(in)  :: nucleus_range(nucl_num)
   integer*4             , intent(in)  :: shell_ang_mom(shell_num)
-  integer*8             , intent(in)  :: numgrid_start(shell_num)
-  integer*8             , intent(in)  :: numgrid_size(shell_num)
+  integer*8             , intent(in)  :: nao_grid_start(shell_num)
+  integer*8             , intent(in)  :: nao_grid_size(shell_num)
   double precision      , intent(in)  :: coord(point_num,3)
   double precision      , intent(in)  :: nucl_coord(nucl_num,3)
-  double precision      , intent(in)  :: interpolator_phi (4,numgrid_num)
-  double precision      , intent(in)  :: interpolator_grad(4,numgrid_num)
-  double precision      , intent(in)  :: interpolator_lap (4,numgrid_num)
+  double precision      , intent(in)  :: interpolator_phi (4,nao_grid_num)
+  double precision      , intent(in)  :: interpolator_grad(4,nao_grid_num)
+  double precision      , intent(in)  :: interpolator_lap (4,nao_grid_num)
   double precision      , intent(in)  :: spline_onset(shell_num)
   double precision      , intent(in)  :: spline_grid_unit_inv(shell_num)
   double precision      , intent(out) :: shell_vgl(shell_num,5,point_num)
@@ -5294,7 +5294,7 @@ integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
 
         if (i_log < 0) then
           i_log = 0
-        else if (i_log >= numgrid_size(ishell_start)) then
+        else if (i_log >= nao_grid_size(ishell_start)) then
           cycle
         end if
 
@@ -5302,7 +5302,7 @@ integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
 
         do ishell=ishell_start, ishell_end
            L = shell_ang_mom(ishell)
-           offset = numgrid_start(ishell) + 1
+           offset = nao_grid_start(ishell) + 1
            v =                 interpolator_phi(1, offset + i_log)
            v = v + t *         interpolator_phi(2, offset + i_log)
            v = v + t * t *     interpolator_phi(3, offset + i_log)
@@ -5344,7 +5344,7 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
    #+begin_src f90 :tangle (eval f) :comments org :exports none
    integer(c_int32_t) function qmckl_compute_ao_basis_shell_numerical_cubic_vgl &
        (context, &
-        numgrid_num, &
+        nao_grid_num, &
         shell_num, &
         point_num, &
         nucl_num, &
@@ -5352,8 +5352,8 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
         nucleus_index, &
         nucleus_range, &
         shell_ang_mom, &
-        numgrid_start, &
-        numgrid_size, &
+        nao_grid_start, &
+        nao_grid_size, &
         coord, &
         nucl_coord, &
         interpolator_phi, &
@@ -5368,7 +5368,7 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
      implicit none
 
      integer (c_int64_t) , intent(in)  , value :: context
-     integer (c_int64_t) , intent(in)  , value :: numgrid_num
+     integer (c_int64_t) , intent(in)  , value :: nao_grid_num
      integer (c_int64_t) , intent(in)  , value :: shell_num
      integer (c_int64_t) , intent(in)  , value :: point_num
      integer (c_int64_t) , intent(in)  , value :: nucl_num
@@ -5376,13 +5376,13 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
      integer (c_int64_t) , intent(in)          :: nucleus_index(nucl_num)
      real    (c_double ) , intent(in)          :: nucleus_range(nucl_num)
      integer (c_int32_t) , intent(in)          :: shell_ang_mom(shell_num)
-     integer (c_int64_t) , intent(in)          :: numgrid_start(shell_num)
-     integer (c_int64_t) , intent(in)          :: numgrid_size(shell_num)
+     integer (c_int64_t) , intent(in)          :: nao_grid_start(shell_num)
+     integer (c_int64_t) , intent(in)          :: nao_grid_size(shell_num)
      real    (c_double ) , intent(in)          :: coord(point_num,3)
      real    (c_double ) , intent(in)          :: nucl_coord(nucl_num,3)
-     real    (c_double ) , intent(in)          :: interpolator_phi (4,numgrid_num)
-     real    (c_double ) , intent(in)          :: interpolator_grad(4,numgrid_num)
-     real    (c_double ) , intent(in)          :: interpolator_lap (4,numgrid_num)
+     real    (c_double ) , intent(in)          :: interpolator_phi (4,nao_grid_num)
+     real    (c_double ) , intent(in)          :: interpolator_grad(4,nao_grid_num)
+     real    (c_double ) , intent(in)          :: interpolator_lap (4,nao_grid_num)
      real    (c_double ) , intent(in)          :: spline_onset(shell_num)
      real    (c_double ) , intent(in)          :: spline_grid_unit_inv(shell_num)
      real    (c_double ) , intent(out)         :: shell_vgl(shell_num,5,point_num)
@@ -5390,7 +5390,7 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
      integer(c_int32_t), external :: qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
      info = qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f &
             (context, &
-        numgrid_num, &
+        nao_grid_num, &
         shell_num, &
         point_num, &
         nucl_num, &
@@ -5398,8 +5398,8 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
         nucleus_index, &
         nucleus_range, &
         shell_ang_mom, &
-        numgrid_start, &
-        numgrid_size, &
+        nao_grid_start, &
+        nao_grid_size, &
         coord, &
         nucl_coord, &
         interpolator_phi, &
@@ -5502,7 +5502,7 @@ qmckl_exit_code qmckl_provide_ao_basis_shell_vgl(qmckl_context context)
                                                      ctx->ao_basis.shell_vgl);
     } else if (ctx->ao_basis.type == 'N') {
       rc = qmckl_compute_ao_basis_shell_numerical_cubic_vgl(context,
-                                                     ctx->ao_basis.numgrid_num,
+                                                     ctx->ao_basis.nao_grid_num,
                                                      ctx->ao_basis.shell_num,
                                                      ctx->point.num,
                                                      ctx->nucleus.num,
@@ -5510,8 +5510,8 @@ qmckl_exit_code qmckl_provide_ao_basis_shell_vgl(qmckl_context context)
                                                      ctx->ao_basis.nucleus_index,
                                                      ctx->ao_basis.nucleus_range,
                                                      ctx->ao_basis.shell_ang_mom,
-                                                     ctx->ao_basis.numgrid_start,
-                                                     ctx->ao_basis.numgrid_size,
+                                                     ctx->ao_basis.nao_grid_start,
+                                                     ctx->ao_basis.nao_grid_size,
                                                      ctx->point.coord.data,
                                                      ctx->nucleus.coord.data,
                                                      ctx->ao_basis.interpolator_phi,

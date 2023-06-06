@@ -958,19 +958,19 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
 *** Number of numerical orbital spline data points
 
    #+begin_src c :tangle (eval c)
-  int64_t numgrid_num = 0L;
+  int64_t nao_grid_num = 0L;
   if (basis_type[0] == 'N') {
 
-    rcio = trexio_read_basis_numgrid_num_64(file, &numgrid_num);
+    rcio = trexio_read_basis_nao_grid_num_64(file, &nao_grid_num);
     if (rcio != TREXIO_SUCCESS) {
       return qmckl_failwith( context,
                              QMCKL_FAILURE,
-                             "trexio_read_basis_numgrid_num",
+                             "trexio_read_basis_nao_grid_num",
                              trexio_string_of_error(rcio));
     }
 
-    assert (numgrid_num > 0);
-    rc = qmckl_set_ao_basis_numgrid_num(context, numgrid_num);
+    assert (nao_grid_num > 0);
+    rc = qmckl_set_ao_basis_nao_grid_num(context, nao_grid_num);
 
     if (rc != QMCKL_SUCCESS)
       return rc;
@@ -1010,33 +1010,33 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
     /* Allocate array for data */
     mem_info.size = shell_num * sizeof(int64_t);
 
-    int64_t* numgrid_start = (int64_t*) qmckl_malloc(context, mem_info);
+    int64_t* nao_grid_start = (int64_t*) qmckl_malloc(context, mem_info);
 
-    if (numgrid_start == NULL) {
+    if (nao_grid_start == NULL) {
       return qmckl_failwith( context,
                              QMCKL_ALLOCATION_FAILED,
-                             "qmckl_trexio_read_basis_numgrid_start_X",
+                             "qmckl_trexio_read_basis_nao_grid_start_X",
                              NULL);
     }
 
-    assert (numgrid_start != NULL);
+    assert (nao_grid_start != NULL);
 
     /* Read data */
-    rcio = trexio_read_safe_basis_numgrid_start_64(file, numgrid_start, shell_num);
+    rcio = trexio_read_safe_basis_nao_grid_start_64(file, nao_grid_start, shell_num);
     if (rcio != TREXIO_SUCCESS) {
-      qmckl_free(context, numgrid_start);
-      numgrid_start = NULL;
+      qmckl_free(context, nao_grid_start);
+      nao_grid_start = NULL;
       return qmckl_failwith( context,
                              QMCKL_FAILURE,
-                             "trexio_read_basis_numgrid_start",
+                             "trexio_read_basis_nao_grid_start",
                              trexio_string_of_error(rcio));
     }
 
     /* Store data */
-    rc = qmckl_set_ao_basis_numgrid_start(context, numgrid_start, shell_num);
+    rc = qmckl_set_ao_basis_nao_grid_start(context, nao_grid_start, shell_num);
 
-    qmckl_free(context, numgrid_start);
-    numgrid_start = NULL;
+    qmckl_free(context, nao_grid_start);
+    nao_grid_start = NULL;
 
     if (rc != QMCKL_SUCCESS)
       return rc;
@@ -1052,33 +1052,33 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
     /* Allocate array for data */
     mem_info.size = shell_num * sizeof(int64_t);
 
-    int64_t* numgrid_size = (int64_t*) qmckl_malloc(context, mem_info);
+    int64_t* nao_grid_size = (int64_t*) qmckl_malloc(context, mem_info);
 
-    if (numgrid_size == NULL) {
+    if (nao_grid_size == NULL) {
       return qmckl_failwith( context,
                              QMCKL_ALLOCATION_FAILED,
-                             "qmckl_trexio_read_basis_numgrid_size_X",
+                             "qmckl_trexio_read_basis_nao_grid_size_X",
                              NULL);
     }
 
-    assert (numgrid_size != NULL);
+    assert (nao_grid_size != NULL);
 
     /* Read data */
-    rcio = trexio_read_safe_basis_numgrid_size_64(file, numgrid_size, shell_num);
+    rcio = trexio_read_safe_basis_nao_grid_size_64(file, nao_grid_size, shell_num);
     if (rcio != TREXIO_SUCCESS) {
-      qmckl_free(context, numgrid_size);
-      numgrid_size = NULL;
+      qmckl_free(context, nao_grid_size);
+      nao_grid_size = NULL;
       return qmckl_failwith( context,
                              QMCKL_FAILURE,
-                             "trexio_read_basis_numgrid_size",
+                             "trexio_read_basis_nao_grid_size",
                              trexio_string_of_error(rcio));
     }
 
     /* Store data */
-    rc = qmckl_set_ao_basis_numgrid_size(context, numgrid_size, shell_num);
+    rc = qmckl_set_ao_basis_nao_grid_size(context, nao_grid_size, shell_num);
 
-    qmckl_free(context, numgrid_size);
-    numgrid_size = NULL;
+    qmckl_free(context, nao_grid_size);
+    nao_grid_size = NULL;
 
     if (rc != QMCKL_SUCCESS)
       return rc;
@@ -1092,35 +1092,35 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
     qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
 
     /* Allocate array for data */
-    mem_info.size = numgrid_num * sizeof(double);
+    mem_info.size = nao_grid_num * sizeof(double);
 
-    double* numgrid_radius = (double*) qmckl_malloc(context, mem_info);
+    double* nao_grid_radius = (double*) qmckl_malloc(context, mem_info);
 
-    if (numgrid_radius == NULL) {
+    if (nao_grid_radius == NULL) {
       return qmckl_failwith( context,
                              QMCKL_ALLOCATION_FAILED,
-                             "qmckl_trexio_read_basis_numgrid_radius_X",
+                             "qmckl_trexio_read_basis_nao_grid_radius_X",
                              NULL);
     }
 
-    assert (numgrid_radius != NULL);
+    assert (nao_grid_radius != NULL);
 
     /* Read data */
-    rcio = trexio_read_safe_basis_numgrid_radius_64(file, numgrid_radius, numgrid_num);
+    rcio = trexio_read_safe_basis_nao_grid_radius_64(file, nao_grid_radius, nao_grid_num);
     if (rcio != TREXIO_SUCCESS) {
-      qmckl_free(context, numgrid_radius);
-      numgrid_radius = NULL;
+      qmckl_free(context, nao_grid_radius);
+      nao_grid_radius = NULL;
       return qmckl_failwith( context,
                              QMCKL_FAILURE,
-                             "trexio_read_basis_numgrid_radius",
+                             "trexio_read_basis_nao_grid_radius",
                              trexio_string_of_error(rcio));
     }
 
     /* Store data */
-    rc = qmckl_set_ao_basis_numgrid_radius(context, numgrid_radius, numgrid_num);
+    rc = qmckl_set_ao_basis_nao_grid_radius(context, nao_grid_radius, nao_grid_num);
 
-    qmckl_free(context, numgrid_radius);
-    numgrid_radius = NULL;
+    qmckl_free(context, nao_grid_radius);
+    nao_grid_radius = NULL;
 
     if (rc != QMCKL_SUCCESS)
       return rc;
@@ -1163,7 +1163,7 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
     qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
 
     /* Allocate array for data */
-    int64_t data_size = numgrid_num * interp_coeff_cnt;
+    int64_t data_size = nao_grid_num * interp_coeff_cnt;
     mem_info.size = data_size * sizeof(double);
 
     double* interpolator_phi = (double*) qmckl_malloc(context, mem_info);
@@ -1206,7 +1206,7 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
     qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
 
     /* Allocate array for data */
-    int64_t data_size = numgrid_num * interp_coeff_cnt;
+    int64_t data_size = nao_grid_num * interp_coeff_cnt;
     mem_info.size = data_size * sizeof(double);
 
     double* interpolator_grad = (double*) qmckl_malloc(context, mem_info);
@@ -1249,7 +1249,7 @@ qmckl_trexio_read_ao_X(qmckl_context context, trexio_t* const file)
     qmckl_memory_info_struct mem_info = qmckl_memory_info_struct_zero;
 
     /* Allocate array for data */
-    int64_t data_size = numgrid_num * interp_coeff_cnt;
+    int64_t data_size = nao_grid_num * interp_coeff_cnt;
     mem_info.size = data_size * sizeof(double);
 
     double* interpolator_lap = (double*) qmckl_malloc(context, mem_info);
