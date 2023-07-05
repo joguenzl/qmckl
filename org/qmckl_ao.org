@@ -5294,8 +5294,10 @@ integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
 
         if (i_log < 0) then
           i_log = 0
+          r_log = 0
         else if (i_log >= nao_grid_size(ishell_start)) then
-          cycle
+          i_log = 0
+          r_log = 0
         end if
 
         t = r_log - i_log
