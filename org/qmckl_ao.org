@@ -5288,13 +5288,9 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
    | ~nucleus_index~       | ~int64_t[nucl_num]~               | in     | Index of the 1st shell of each nucleus                          |
    | ~nucleus_range~       | ~double[nucl_num]~                | in     | Range of the nucleus                                            |
    | ~shell_ang_mom~       | ~int32_t[shell_num]~              | in     | Angular momentum per shell                                      |
-   | ~nao_grid_start~       | ~int64_t[shell_num]~             | in     | Index of the 1st spline data point of each shell                |
    | ~nao_grid_size~        | ~int64_t[shell_num]~             | in     | Number of spline data points per shell                          |
    | ~coord~               | ~double[3][point_num]~            | in     | Coordinates                                                     |
    | ~nucl_coord~          | ~double[3][nucl_num]~             | in     | Nuclear coordinates                                             |
-   | ~interpolator_phi~    | ~double[4*nao_grid_num]~          | in     | Spline data for the radial wave function interpolator           |
-   | ~interpolator_grad~   | ~double[4*nao_grid_num]~          | in     | Spline data for the radial wave function gradient interpolator  |
-   | ~interpolator_lap~    | ~double[4*nao_grid_num]~          | in     | Spline data for the radial wave function laplacian interpolator |
    | ~interpolator_compact~    | ~double[12*nao_grid_num]~     | in     | Compact spline data for the radial wave function interpolators  |
    | ~nao_nucleus_size_compact~   | ~int64_t[nucl_num]~        | in     | Entry point into the compact interpolator data per nucleus      |
    | ~nao_nucleus_stride_compact~   | ~int64_t[nucl_num]~      | in     | Stride for compact interpolator data per nucleus                |
@@ -5321,13 +5317,9 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
          const int64_t* nucleus_index,
          const double* nucleus_range,
          const int32_t* shell_ang_mom,
-         const int64_t* nao_grid_start,
          const int64_t* nao_grid_size,
          const double* coord,
          const double* nucl_coord,
-         const double* interpolator_phi,
-         const double* interpolator_grad,
-         const double* interpolator_lap,
          const double* interpolator_compact,
          const int64_t* nao_nucleus_start_compact,
          const int64_t* nao_nucleus_stride_compact,
@@ -5340,8 +5332,7 @@ end function qmckl_compute_ao_basis_shell_gaussian_vgl_f
 integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
      context, nao_grid_num, shell_num, point_num, nucl_num,       &
      nucleus_shell_num, nucleus_index, nucleus_range, shell_ang_mom, &
-     nao_grid_start, nao_grid_size, coord, nucl_coord,     &
-     interpolator_phi, interpolator_grad, interpolator_lap, &
+     nao_grid_size, coord, nucl_coord,     &
      interpolator_compact, nao_nucleus_start_compact, nao_nucleus_stride_compact, &
      spline_onset, spline_grid_unit_inv, shell_vgl) &
      result(info)
@@ -5356,13 +5347,9 @@ integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
   integer*8             , intent(in)  :: nucleus_index(nucl_num)
   double precision      , intent(in)  :: nucleus_range(nucl_num)
   integer*4             , intent(in)  :: shell_ang_mom(shell_num)
-  integer*8             , intent(in)  :: nao_grid_start(shell_num)
   integer*8             , intent(in)  :: nao_grid_size(shell_num)
   double precision      , intent(in)  :: coord(point_num,3)
   double precision      , intent(in)  :: nucl_coord(nucl_num,3)
-  double precision      , intent(in)  :: interpolator_phi (4,nao_grid_num)
-  double precision      , intent(in)  :: interpolator_grad(4,nao_grid_num)
-  double precision      , intent(in)  :: interpolator_lap (4,nao_grid_num)
   double precision      , intent(in)  :: interpolator_compact (12*nao_grid_num)
   integer*8             , intent(in)  :: nao_nucleus_start_compact(nucl_num)
   integer*8             , intent(in)  :: nao_nucleus_stride_compact(nucl_num)
@@ -5422,7 +5409,6 @@ integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
 
         do ishell=ishell_start, ishell_end
            L = shell_ang_mom(ishell)
-           offset = nao_grid_start(ishell) + 1
            v =                 interpolator_compact(compact_offset + 12*(ishell-ishell_start) + 1)
            v = v + t *         interpolator_compact(compact_offset + 12*(ishell-ishell_start) + 2)
            v = v + t * t *     interpolator_compact(compact_offset + 12*(ishell-ishell_start) + 3)
@@ -5435,19 +5421,6 @@ integer function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f( &
            deriv2 = deriv2 + t *         interpolator_compact(compact_offset + 12*(ishell-ishell_start) + 10)
            deriv2 = deriv2 + t * t *     interpolator_compact(compact_offset + 12*(ishell-ishell_start) + 11)
            deriv2 = deriv2 + t * t * t * interpolator_compact(compact_offset + 12*(ishell-ishell_start) + 12)
-
-           !v =                           interpolator_phi(1, offset + i_log)
-           !v =           v + t *         interpolator_phi(2, offset + i_log)
-           !v =           v + t * t *     interpolator_phi(3, offset + i_log)
-           !v =           v + t * t * t * interpolator_phi(4, offset + i_log)
-           !deriv1 =                      interpolator_grad(1, offset + i_log)
-           !deriv1 = deriv1 + t *         interpolator_grad(2, offset + i_log)
-           !deriv1 = deriv1 + t * t *     interpolator_grad(3, offset + i_log)
-           !deriv1 = deriv1 + t * t * t * interpolator_grad(4, offset + i_log)
-           !deriv2 =                      interpolator_lap(1, offset + i_log)
-           !deriv2 = deriv2 + t *         interpolator_lap(2, offset + i_log)
-           !deriv2 = deriv2 + t * t *     interpolator_lap(3, offset + i_log)
-           !deriv2 = deriv2 + t * t * t * interpolator_lap(4, offset + i_log)
 
            grad_fac = r_inv**(L+2) * (deriv1 - (L+1) * v * r_inv)
            lapl_parts(:) = r_inv**(L+5) * (d(:)**2 * r**2*deriv2 &
@@ -5485,13 +5458,9 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
         nucleus_index, &
         nucleus_range, &
         shell_ang_mom, &
-        nao_grid_start, &
         nao_grid_size, &
         coord, &
         nucl_coord, &
-        interpolator_phi, &
-        interpolator_grad, &
-        interpolator_lap, &
         interpolator_compact, &
         nao_nucleus_start_compact, &
         nao_nucleus_stride_compact, &
@@ -5512,13 +5481,9 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
      integer (c_int64_t) , intent(in)          :: nucleus_index(nucl_num)
      real    (c_double ) , intent(in)          :: nucleus_range(nucl_num)
      integer (c_int32_t) , intent(in)          :: shell_ang_mom(shell_num)
-     integer (c_int64_t) , intent(in)          :: nao_grid_start(shell_num)
      integer (c_int64_t) , intent(in)          :: nao_grid_size(shell_num)
      real    (c_double ) , intent(in)          :: coord(point_num,3)
      real    (c_double ) , intent(in)          :: nucl_coord(nucl_num,3)
-     real    (c_double ) , intent(in)          :: interpolator_phi (4,nao_grid_num)
-     real    (c_double ) , intent(in)          :: interpolator_grad(4,nao_grid_num)
-     real    (c_double ) , intent(in)          :: interpolator_lap (4,nao_grid_num)
      real    (c_double ) , intent(in)          :: interpolator_compact (12*nao_grid_num)
      integer (c_int64_t) , intent(in)          :: nao_nucleus_start_compact(nucl_num)
      integer (c_int64_t) , intent(in)          :: nao_nucleus_stride_compact(nucl_num)
@@ -5537,13 +5502,9 @@ end function qmckl_compute_ao_basis_shell_numerical_cubic_vgl_f
         nucleus_index, &
         nucleus_range, &
         shell_ang_mom, &
-        nao_grid_start, &
         nao_grid_size, &
         coord, &
         nucl_coord, &
-        interpolator_phi, &
-        interpolator_grad, &
-        interpolator_lap, &
         interpolator_compact, &
         nao_nucleus_start_compact, &
         nao_nucleus_stride_compact, &
@@ -5652,13 +5613,9 @@ qmckl_exit_code qmckl_provide_ao_basis_shell_vgl(qmckl_context context)
                                                      ctx->ao_basis.nucleus_index,
                                                      ctx->ao_basis.nucleus_range,
                                                      ctx->ao_basis.shell_ang_mom,
-                                                     ctx->ao_basis.nao_grid_start,
                                                      ctx->ao_basis.nao_grid_size,
                                                      ctx->point.coord.data,
                                                      ctx->nucleus.coord.data,
-                                                     ctx->ao_basis.interpolator_phi,
-                                                     ctx->ao_basis.interpolator_grad,
-                                                     ctx->ao_basis.interpolator_lap,
                                                      ctx->ao_basis.interpolator_compact,
                                                      ctx->ao_basis.nao_nucleus_start_compact,
                                                      ctx->ao_basis.nao_nucleus_stride_compact,
